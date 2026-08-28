@@ -1,0 +1,22 @@
+# Python bytecode — regenerated automatically, never belongs in version control
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Packaging / build artefacts
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
