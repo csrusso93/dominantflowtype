@@ -35,6 +35,18 @@ class Config:
     max_dz_to_depth_ratio: float = 0.5    # |dz|/depth above this => unusable
     min_depth: float = 0.05               # ignore sections shallower than this [m]
 
+    # --- bank-full estimation (channels with NO mapped trimline) -------------
+    # See bankfull.py. Bank-full Q* is a CLASS proxy, not a quantitative Q*:
+    # a previous implementation agreed 100% on flow type but over-predicted Q*
+    # magnitude ~140x by locking onto VALLEY WALLS instead of channel banks.
+    # bankfull_max_halfwidth is the primary guard against that -- it must stay
+    # at channel scale, NOT valley scale (contrast transect_halfwidth = 50 m).
+    bankfull_max_halfwidth: float = 15.0  # max outward bank search per side [m]
+    bankfull_min_rise: float = 0.25       # bed must rise this far above the
+                                          # thalweg before a crest counts [m]
+    bankfull_turnover_pts: int = 3        # samples ahead that must not exceed a
+                                          # candidate crest for it to be a crest
+
     # --- flow accumulation (A_us) --------------------------------------------
     routing_dem_path: str = ""            # optional full-coverage DEM for A_us
                                           # (set automatically if 3DEP/OpenTopo
