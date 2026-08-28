@@ -27,10 +27,42 @@ and (c) **reporting when the cap was hit**, so valley-scale sections can be
 filtered out instead of silently inflating Q\*. Those flags are the point --
 do not discard them.
 
-The prior 100 %/140x validation applies to the *lost* implementation. This one
-**needs re-validating** against the BC-E10 and SNC-W8 trimlined transects
-before its magnitudes are trusted; :func:`calibrate_against_trimlines` exists
-for exactly that.
+Measured on BC-E10 (2026-08-28) -- READ THIS
+--------------------------------------------
+Calibrated against the 34 mapped BC-E10 trimlines on the 0.5 m SfM DTM, 73 paired
+transects at 5 m spacing. Results:
+
+* **Q\* over-prediction: median 36.7x** (area 18.9x, the rest from velocity
+  scaling with sqrt(R)). Better than the lost implementation's ~140x, but
+  **nowhere near quantitative.**
+* Bank-full sections are **4.6x wider** and **4.8x deeper** than the mapped flow.
+* **The ``reliable`` flag almost never fires** -- 5 % of transects at
+  ``bankfull_max_halfwidth=15``, 0 % at 10 m, 18 % at 25 m. Too rare to screen on.
+* **``bankfull_min_rise`` has no effect at all** on this terrain (identical
+  results from 0.10 to 1.00 m).
+
+The diagnosis for the last two: in these incised channels the bed rises
+*monotonically* out of the thalweg into the valley wall -- there is no local
+maximum to find, so the crest branch is never reached and **every transect
+terminates at the cap**. The over-prediction is then essentially a function of
+the cap alone::
+
+    max_halfwidth   6 m    8 m    10 m   15 m   25 m
+    median Q* ratio 9.6x   17.4x  23.5x  36.7x  53.6x
+
+**So this module does not solve the bank-full problem; it makes the failure
+explicit and bounded.** Tightening the cap until the ratio approaches 1 would
+just be fitting an arbitrary parameter to the BC-E10 answer, and would not
+transfer to channels of different size.
+
+The defensible path forward is **hydraulic geometry**: predict bank-full width
+and depth from upstream drainage area ``A_us`` (a regional curve fitted across
+basins), rather than searching the profile for a bank that is not there. That
+needs trimlines *and thalwegs* in more than one basin -- as of 2026-08-28 only
+BC-E10 has a thalweg, so the regression cannot yet be fitted.
+
+Until then: **use bank-full Q\* for flow-type classification only** (the lost
+implementation agreed 100 % on class), and never quote its magnitude.
 
 Method
 ------
