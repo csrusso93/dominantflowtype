@@ -16,6 +16,35 @@ Q* = Q_peak / Q_fluv = (v · A_xs) / (I · A_us)      Q* > 1 → debris flow ; Q
 | `A_us` | upstream drainage area | D8 flow routing on the DEM, clipped to the watershed |
 | `I` | 30-min rainfall intensity `I30` | **MRMS radar** *(no account)*, **Synoptic** gauges, or 9.7 mm/hr |
 
+### Verified against the source paper (2026-08-28)
+
+The implementation was checked line-by-line against Cavagnaro et al. (2024) and is
+faithful on every parameter that matters:
+
+* **`h` is the hydraulic radius** `A_xs / wetted_perimeter`, *not* flow depth —
+  `metrics.velocity` defaults to `velocity_scale="hydraulic_radius"`, matching the
+  paper's `h`. (`hydraulic_depth` and `max_depth` remain available as explicit
+  opt-ins for sensitivity testing.)
+* `Fr = 1.0`, `g = 9.81`, `qstar_threshold = 1.0` — paper §2.3.
+* `I` is the peak **30-minute** intensity — the paper's stated compromise between
+  the concentration time of small headwater basins and rainfall-data availability.
+* The **9.7 mm/hr** fallback is the paper's own optimum when `I30` is held constant
+  across all observations (84.1 % accuracy, vs. 91.5 % event-specific).
+* Where both banks are mapped, the water-surface elevation is the **lower of the
+  two**, per the paper.
+* Cross-sections are rejected where incision or deposition is large relative to
+  flow depth, per the paper's Figure 1d/1e (`metrics.usability`).
+
+For reference, Q\* separates 642 observed flows (270 floods, 372 debris flows) to
+**91.5 ± 0.9 %** accuracy, with mean Q\* ~42× higher for debris flows than floods
+(~63× post-fire).
+
+**Scope note.** This package computes **Q\***. The rainfall anomaly **R\***
+(Cavagnaro et al., 2025) is *not* implemented here — it is produced by the companion
+[`stormscape`](https://github.com/scottwmccoy/stormscape) tool. Likewise, the M3C2
+step here yields a **change raster**, not incremental along-path volumes; see
+Scheip & Wegmann (2022) and Guido (2025) under Reference.
+
 ## Data import (methods ported from `stormscape`)
 
 The DEM and rainfall importers follow **[`stormscape`](https://github.com/scottwmccoy/stormscape)**
@@ -244,7 +273,44 @@ pip install -e .
 
 ## Reference
 
+**Implemented here**
+
 Cavagnaro, D. B., McCoy, S. W., Kean, J. W., Thomas, M. A., Lindsay, D. N.,
 McArdell, B. W., & Hirschberg, J. (2024). *A Robust Quantitative Method to
 Distinguish Runoff-Generated Debris Flows From Floods.* Geophysical Research
-Letters, 51, e2024GL109768.
+Letters, 51, e2024GL109768. doi:10.1029/2024GL109768 — **the Q\* metric.**
+
+Lague, D., Brodu, N., & Leroux, J. (2013). *Accurate 3D comparison of complex
+topography with terrestrial laser scanner: application to the Rangitikei canyon
+(N-Z).* ISPRS J. Photogramm. Remote Sens., 82, 10–26.
+doi:10.1016/j.isprsjprs.2013.04.009 — **M3C2**, used by `pointcloud.py`.
+
+O'Callaghan, J. F., & Mark, D. M. (1984); Barnes, R., Lehman, C., & Mulla, D.
+(2014) — **D8 flow routing** and **priority-flood** pit filling, used by
+`hydrology.py`.
+
+**Related, not implemented here**
+
+Cavagnaro, D. B., McCoy, S. W., Thomas, M. A., Kostelnik, J., & Lindsay, D. N.
+(2025). *Improved Prediction of Postfire Debris Flows Through Rainfall Anomaly
+Maps.* Geophysical Research Letters, 52, e2025GL114791.
+doi:10.1029/2025GL114791 — the **R\*** anomaly (R\*₁₅ₘᵢₙ = peak i15 ÷ 1-yr
+Atlas-14 i15, R\*crit = 1) and the **M1 & R\*** model. Produced by `stormscape`,
+not by this package.
+
+Marc, O., Gosset, M., Saito, H., Uchida, T., & Malet, J.-P. (2019). *Spatial
+Patterns of Storm-Induced Landslides and Their Relation to Rainfall Anomaly Maps.*
+Geophysical Research Letters, 46, 11,167–11,177. doi:10.1029/2019GL083173 — origin
+of the rainfall-anomaly concept, for *landslides*, normalizing event rainfall by
+the **10-year** return period. Cavagnaro et al. (2025) adapt it to short-duration
+i15 and the 1-year RI for runoff-generated debris flows.
+
+Scheip, C., & Wegmann, K. (2022). *Insights on the growth and mobility of debris
+flows from repeat high-resolution lidar.* Landslides, 19(6), 1297–1319 —
+incremental along-path volume estimation from repeat topography.
+
+Guido, L. E. (2025). *IncrementalDebrisFlowVolumeAnalyzer: A Python tool for
+estimating volumes along a debris flow path.* Journal of Open Source Software —
+**submitted 21 Aug 2025; draft, not yet published** (cite as in review). Builds on
+Scheip & Wegmann (2022). A candidate downstream consumer of this package's change
+raster.
