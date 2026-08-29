@@ -77,29 +77,32 @@ faithful py3dep 3DEP path is optional (`pip install py3dep rioxarray`); without 
 Open **QGIS → Plugins → Python Console**, then:
 
 The line you add to `sys.path` must be the folder that **contains**
-`dominantflowtype` (i.e. `package_parent`) — *not* the package folder itself.
-This OS-agnostic loader finds Box on the PC, Mac, or Linux with no edits:
+`dominantflowtype` — *not* the package folder itself. Set `ROOT` to wherever you
+cloned the repository:
 
 ```python
-import sys, os
-for _root in (
-    r"/path/to/parent/of/dominantflowtype",                     # PC
-    os.path.expanduser("~/path/to/parent/of/dominantflowtype"),  # Mac
-    os.path.expanduser("~/path/to/parent/of/dominantflowtype"),                    # Box Drive / Linux
-):
-    if os.path.isdir(_root):
-        sys.path.insert(0, _root)
-        break
-else:
-    raise FileNotFoundError("Could not locate package_parent on this machine")
+import sys
+ROOT = r"/path/to/parent/of/dominantflowtype"   # the folder CONTAINING the package
+sys.path.insert(0, ROOT)
 
 import dominantflowtype as dft
 records, reaches, rain = dft.run()      # capture the return so you can inspect it
 ```
 
-`os.path.expanduser("~")` resolves to your home directory on any machine, so the
-same snippet runs unchanged everywhere (your Mac home is `codys`, the PC is
-`user`). If Box lives somewhere else, add that path to the tuple.
+Alternatively, run `__main__.py` directly and skip the `sys.path` line entirely —
+it locates the package itself, from its own `__file__`, from the
+`DOMINANTFLOWTYPE_ROOT` environment variable, or by walking up from the working
+directory:
+
+```python
+exec(open(r"/path/to/dominantflowtype/__main__.py", encoding="utf-8").read())
+```
+
+From a shell, `cd` anywhere at or below the folder containing the package and run:
+
+```bash
+python -m dominantflowtype
+```
 
 `run()` returns `(records, reaches, rain)`:
 

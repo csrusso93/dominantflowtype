@@ -27,24 +27,24 @@ Core diagnostic (Cavagnaro et al., 2024):
     Q* > 1  -> debris flow   |   Q* <= 1 -> flood   (~92% accuracy; threshold=1)
 
 Run interactively inside the QGIS Python console.  Add the folder that
-*contains* this package (``package_parent``) to ``sys.path`` first; this loader
-finds Box on PC / Mac / Linux with no edits::
+*contains* this package to ``sys.path`` first -- set ``ROOT`` to wherever you
+cloned it::
 
-    >>> import sys, os
-    >>> for _root in (
-    ...     r"/path/to/parent/of/dominantflowtype",
-    ...     os.path.expanduser("~/path/to/parent/of/dominantflowtype"),
-    ...     os.path.expanduser("~/path/to/parent/of/dominantflowtype"),
-    ... ):
-    ...     if os.path.isdir(_root):
-    ...         sys.path.insert(0, _root); break
+    >>> import sys
+    >>> ROOT = r"/path/to/parent/of/dominantflowtype"
+    >>> sys.path.insert(0, ROOT)
     >>> import dominantflowtype as dft
     >>> dft.run()
 
 or, to run the single script directly (any OS)::
 
-    >>> exec(open(os.path.join(_root, "dominantflowtype", "__main__.py"),
+    >>> import os
+    >>> exec(open(os.path.join(ROOT, "dominantflowtype", "__main__.py"),
     ...           encoding="utf-8").read())
+
+``__main__.py`` resolves the package location on its own -- from its own
+``__file__``, from ``$DOMINANTFLOWTYPE_ROOT``, or by walking up from the working
+directory -- so running it needs no path edits.
 
 You will be prompted, one field at a time, for an (optional) OpenTopography
 key, pre- and post-event DEMs (either skippable), trimlines, thalweg and

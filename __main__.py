@@ -3,7 +3,7 @@
 
 Works three ways, on PC / Mac / Linux, with no path edits:
 
-    python -m dominantflowtype                     # from package_parent/
+    python -m dominantflowtype                     # from the package's parent folder
     exec(open(r".../dominantflowtype/__main__.py", encoding="utf-8").read())
     (run this file directly)
 
@@ -28,11 +28,22 @@ def _bootstrap_run():
         _candidates = []
         if _here:
             _candidates.append(os.path.dirname(_here))  # parent of the package
-        _candidates += [
-            r"/path/to/parent/of/dominantflowtype",                     # PC
-            os.path.expanduser("~/path/to/parent/of/dominantflowtype"),  # Mac
-            os.path.expanduser("~/path/to/parent/of/dominantflowtype"),                    # Box Drive / Linux
-        ]
+
+        # Explicit override, for environments where nothing else can be inferred
+        # (e.g. exec'd in a console with no __file__ and an unrelated cwd).
+        _env = os.environ.get("DOMINANTFLOWTYPE_ROOT")
+        if _env:
+            _candidates.append(os.path.expanduser(_env))
+
+        # Otherwise walk up from the working directory looking for the package.
+        _dir = os.path.abspath(os.getcwd())
+        while True:
+            _candidates.append(_dir)
+            _parent = os.path.dirname(_dir)
+            if _parent == _dir:
+                break
+            _dir = _parent
+
         for _root in _candidates:
             if _root and os.path.isdir(os.path.join(_root, "dominantflowtype")):
                 if _root not in sys.path:
@@ -40,7 +51,12 @@ def _bootstrap_run():
                 break
         else:
             raise FileNotFoundError(
-                "Could not locate the folder containing 'dominantflowtype' on this machine"
+                "Could not locate the folder containing the 'dominantflowtype' "
+                "package.\nTried the package's own parent directory, "
+                "$DOMINANTFLOWTYPE_ROOT, and every ancestor of the working "
+                "directory (%s).\nEither cd to a folder at or below the one "
+                "containing 'dominantflowtype', or set DOMINANTFLOWTYPE_ROOT to "
+                "it." % os.getcwd()
             )
         from dominantflowtype import run
 
