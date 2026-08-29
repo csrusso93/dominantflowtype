@@ -26,12 +26,27 @@ def _priority_flood_fill(dem):
     perfectly flat region in which no cell has a downslope neighbour, so every
     cell in it is a terminal sink and **all upstream flow stops there**.
 
-    Measured on a 0.445 km2 burned catchment: filling to exactly the spill level
-    left 546 terminal flat cells and A_us reached only 0.257 km2, i.e. 57.9 % of
-    the basin. With the epsilon it is 0.448 km2 (100.7 %) -- a 1.74x correction.
-    Since ``Q_fluv = A_us * I``, Q\* there had been over-predicted by 74 %.
-    Catchments without significant depressions are unaffected (two others moved
-    100.4 -> 100.8 % and 100.5 -> 100.6 %).
+    **The severity depends on accumulation resolution**, because coarsening
+    averages small depressions away before they can become flats. Measured on a
+    0.445 km2 burned catchment, A_us without the epsilon vs with it:
+
+    ======  ==========  ==========  =======
+    res      A_us old    A_us new    ratio
+    ======  ==========  ==========  =======
+    0.5 m     0.076       0.445       5.83
+    1 m       0.130       0.445       3.42
+    2 m       0.257       0.448       1.74
+    5 m       0.274       0.457       1.67
+    10 m      0.470       0.470       1.00
+    20 m      0.495       0.495       1.00
+    ======  ==========  ==========  =======
+
+    So ``Config.flow_accum_res = 10.0`` (the default) was NOT affected on this
+    catchment -- but routing on a native-resolution drone DTM was, badly: at
+    0.5 m only 17 % of the basin drained to the outlet. Since
+    ``Q_fluv = A_us * I``, that understates A_us and inflates Q\* by the same
+    factor. Anything routed at a fine resolution before this fix should be
+    recomputed; results at 10 m and coarser are unchanged.
 
     NaN = nodata.
     """

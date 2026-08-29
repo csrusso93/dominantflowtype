@@ -8,8 +8,11 @@ producing perfectly flat regions. `_d8_accumulation` assigns a receiver only
 where the steepest slope is ``> 0``, so every cell in such a flat became a
 terminal sink and all upstream flow stopped there.
 
-On a real 0.445 km2 burned catchment this made A_us reach only 57.9 % of the
-basin; since ``Q_fluv = A_us * I``, Q\* was over-predicted by 74 %.
+Severity depends on accumulation resolution, because coarsening averages small
+depressions away before they can become flats. On a real 0.445 km2 burned
+catchment A_us reached only 17 % of the basin at 0.5 m and 58 % at 2 m, but was
+unaffected at the 10 m default. Since ``Q_fluv = A_us * I``, a fine-resolution
+run understates A_us and inflates Q\* by the same factor.
 
 Run:  python tests_hydrology_flats.py
 """
