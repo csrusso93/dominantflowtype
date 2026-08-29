@@ -58,10 +58,11 @@ rasterio/xarray). All sources are account-free public US data except Synoptic:
 | `dem_3dep.py` | bare-earth DEM for an AOI at 1/3/5/10/30 m | USGS **3DEP** (py3dep *or* the GDAL ImageServer fallback) | **none** |
 | `aoi.py` | normalise a bbox / vector / QGIS layer to a WGS84 bounding box | — | — |
 
-> **MRMS solves the Bear Fire rainfall blocker.** The Synoptic account tied to
-> this project returns HTTP 403 (no data access). Set `rainfall_source="mrms"`
-> and give a storm date to get a gauge-free `I30` straight from public radar —
-> no account, no extra installs (QGIS 4.x GDAL already has the GRIB driver).
+> **MRMS removes the gauge dependency.** Synoptic accounts are often not entitled
+> to the timeseries endpoints (HTTP 403), and many burned catchments have no
+> nearby gauge anyway. Set `rainfall_source="mrms"` and give a storm date to get
+> a gauge-free `I30` straight from public radar — no account, no extra installs
+> (QGIS 4.x GDAL already has the GRIB driver).
 
 ## Requirements
 
@@ -172,7 +173,7 @@ Before a full-resolution run, validate the whole chain in minutes on a small cli
 
 ```python
 import dominantflowtype as dft
-# one-time: a 200 m AOI centred in the cloud (BC-E10 extent shown; use yours)
+# one-time: a 200 m AOI centred in the cloud (example extent; use your own)
 dft.make_test_aoi((738405.27, 4387968.70, 739533.81, 4388812.37),
                   "smoketest_aoi.gpkg", epsg=6339, size_m=200)
 dft.run(cfg=dft.smoke_config())        # coarse subsample/DTM; actually runs

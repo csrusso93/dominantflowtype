@@ -10,9 +10,9 @@ build), so it needs **no account and no extra installs**.
 Why this matters here
 ---------------------
 Cavagnaro's Q* needs a 30-minute rainfall intensity ``I30``. The workflow's
-Synoptic path requires a gauge near the basin *and* an account with data access;
-for the 2024 Bear Fire that account currently returns HTTP 403 (see
-``SESSION_SUMMARY.md``). MRMS gives a gridded, gauge-independent ``I30`` over the
+Synoptic path requires a gauge near the basin *and* an account with data access,
+and many Synoptic accounts are not entitled to the timeseries endpoints (HTTP
+403). MRMS gives a gridded, gauge-independent ``I30`` over the
 basin from public radar -- :func:`mrms_i30` returns a single number the pipeline
 drops straight into Q*.
 

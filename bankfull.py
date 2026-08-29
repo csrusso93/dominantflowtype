@@ -9,60 +9,42 @@ and the resulting Q\* is quantitative (Cavagnaro et al., 2024). Most channels
 have no trimline. This module estimates a **bank-full** WSE from the bed profile
 alone, so Q\* can be run as a *susceptibility screen* on un-mapped channels.
 
-**Read this before using the output.** A previous implementation of this idea
-(since lost; described in the project's ``METHODS_SUMMARY``) was validated at
-BC-E10 against trimline-based Q\* on the same transects:
+**Read this before using the output. Bank-full Q\* is a class proxy, not a
+quantitative Q\*.** Where it has been validated against mapped trimlines on the
+same transects, flow-type classification (debris flow vs flood) agreed well,
+while the *magnitude* was over-predicted by one to two orders of magnitude.
 
-* **flow-type classification agreed 100 %** (debris flow vs flood), but
-* it **over-predicted Q\* magnitude by ~140x** (up to ~700x with a wider bank
-  search), because at this channel scale the outward search ran past the real
-  banks and locked onto **valley walls** -- the resulting section was ~4x wider
-  and ~10x deeper than the mapped debris flow.
+The reason is geometric. In an incised channel the bed often rises
+*monotonically* out of the thalweg into the valley wall, with no local maximum
+to find. Crest detection then never fires, the outward search runs to its cap,
+and the section returned is a valley cross-section rather than a channel one --
+several times too wide and too deep. Where that happens, the result is largely a
+function of ``bankfull_max_halfwidth`` rather than of the channel.
 
-So: bank-full Q\* is a **class proxy, not a quantitative Q\***. This rewrite
-attacks the specific failure mode above by (a) capping the outward search at a
-channel scale rather than the full transect half-width, (b) detecting the bank
-*crest* by slope reversal instead of walking until the bed rises to some level,
-and (c) **reporting when the cap was hit**, so valley-scale sections can be
-filtered out instead of silently inflating Q\*. Those flags are the point --
-do not discard them.
+This implementation therefore (a) caps the outward search at a channel scale
+rather than the full transect half-width, (b) detects the bank *crest* by slope
+reversal instead of walking until the bed rises to some level, and (c)
+**reports when the cap was hit**, via ``status`` / ``limiting_side`` /
+``reliable``, so valley-scale sections can be filtered out instead of silently
+inflating Q\*. Those flags are the point -- do not discard them.
 
-Measured on BC-E10 (2026-08-28) -- READ THIS
---------------------------------------------
-Calibrated against the 34 mapped BC-E10 trimlines on the 0.5 m SfM DTM, 73 paired
-transects at 5 m spacing. Results:
+Tuning the cap until the ratio approaches 1 fits an arbitrary parameter to one
+site's answer and does not transfer to channels of a different size. This module
+does not solve the bank-full problem; it makes the failure explicit and bounded.
 
-* **Q\* over-prediction: median 36.7x** (area 18.9x, the rest from velocity
-  scaling with sqrt(R)). Better than the lost implementation's ~140x, but
-  **nowhere near quantitative.**
-* Bank-full sections are **4.6x wider** and **4.8x deeper** than the mapped flow.
-* **The ``reliable`` flag almost never fires** -- 5 % of transects at
-  ``bankfull_max_halfwidth=15``, 0 % at 10 m, 18 % at 25 m. Too rare to screen on.
-* **``bankfull_min_rise`` has no effect at all** on this terrain (identical
-  results from 0.10 to 1.00 m).
+Two things to check before trusting any comparison built on this:
 
-The diagnosis for the last two: in these incised channels the bed rises
-*monotonically* out of the thalweg into the valley wall -- there is no local
-maximum to find, so the crest branch is never reached and **every transect
-terminates at the cap**. The over-prediction is then essentially a function of
-the cap alone::
+* **DEM vintage.** Comparing basins measured on surfaces of different ages can
+  change apparent depth by several fold and will dominate everything else. Use a
+  bed contemporaneous with the flow being measured.
+* **Hydraulic geometry is not a reliable substitute.** Predicting bank-full
+  width and depth from upstream drainage area ``A_us`` has been tried and, over
+  1.4 decades of ``A_us``, barely outperformed predicting a constant. Fit and
+  check it on your own data before relying on it.
 
-    max_halfwidth   6 m    8 m    10 m   15 m   25 m
-    median Q* ratio 9.6x   17.4x  23.5x  36.7x  53.6x
-
-**So this module does not solve the bank-full problem; it makes the failure
-explicit and bounded.** Tightening the cap until the ratio approaches 1 would
-just be fitting an arbitrary parameter to the BC-E10 answer, and would not
-transfer to channels of different size.
-
-The defensible path forward is **hydraulic geometry**: predict bank-full width
-and depth from upstream drainage area ``A_us`` (a regional curve fitted across
-basins), rather than searching the profile for a bank that is not there. That
-needs trimlines *and thalwegs* in more than one basin -- as of 2026-08-28 only
-BC-E10 has a thalweg, so the regression cannot yet be fitted.
-
-Until then: **use bank-full Q\* for flow-type classification only** (the lost
-implementation agreed 100 % on class), and never quote its magnitude.
+Measured values from one multi-basin validation, including the cap-dependence
+table and the hydraulic-geometry fits, are recorded in ``CALIBRATION.md``. They
+are provenance, not defaults -- nothing in this module depends on them.
 
 Method
 ------
@@ -229,7 +211,7 @@ def calibrate_against_trimlines(paired, robust=True):
 
     The prior implementation over-predicted Q\\* magnitude ~140x. Rather than
     assume a correction, derive one where BOTH a trimline and a bank-full
-    section exist for the same transect (BC-E10, SNC-W8).
+    section exist for the same transect.
 
     Parameters
     ----------

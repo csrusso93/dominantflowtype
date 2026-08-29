@@ -5,7 +5,7 @@ Ported from ``stormscape.dem`` (S. W. McCoy, MIT). 3DEP is the public elevation
 layer behind The National Map, so this fetches the same bare-earth data the
 interactive downloader serves, but scripted and AOI-clipped -- handy for a
 full-coverage routing DEM when the local lidar tiles do not cover the whole
-watershed (see ``SESSION_SUMMARY.md`` follow-up: A_us for the southern strip).
+watershed.
 
 Two access paths, same USGS 3DEP data, both account-free:
 
